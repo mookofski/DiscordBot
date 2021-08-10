@@ -1,50 +1,100 @@
+from asyncio.windows_events import NULL
+from Android.IUser import IUser
+from OP_Handler import OPHandler
 import asyncio
 from asyncio.base_events import Server
 import discord
 import os
 import sqlite3
+import Intrepter
+from Notifier import *
+
 
 from discord import message
-import timemng
-import Observer
 
 
+def GetInstance(user: discord.User, active: list[discord.User], inst: list[OPHandler]):
+
+    if user in active:
+        return Instances[ActiveUsers.index(user)]
+        pass
+    else:
+        active.append(user)
+        inst.append(OPHandler(user))
+        return inst[len(inst) - 1]
+        pass
+
+    pass
 
 
-conn=sqlite3.connect('tasks.db')
+async def Timeout(inst: list[OPHandler], active: list[discord.User]):
+    while True:
+        await asyncio.sleep(15 * 60)
+        if len(inst) > 0:
+            for a in inst:
 
-c=conn.cursor()
+                if a.Interacted == False:
+                    active.remove(a.user)
+                    inst.remove(a)
+                    print(":REMOVED")
+                    pass  # remove
+                else:
+                    a.Interacted = False
+                    pass  # reset
+                pass  # inst loop
+            pass  # length check
 
-client=discord.Client()
+        pass  # loop
+
+    pass
+
+
+client = discord.Client()
+
+Instances = list[OPHandler]()
+ActiveUsers = list[discord.User]()
+
+loop = asyncio.get_event_loop()
+TimeoutHandler = loop.create_task(Timeout(Instances, ActiveUsers))
+
+
 
 @client.event
 async def on_ready():
-    print('logged as {0.user}'.format(client))
+    print("logged as {0.user}".format(client))
+    notifier = Notifier(client)
+    notifier.TimeList.append(sqlite3.Time(hour=19, minute=32))
+    notifier.TimeList.append(sqlite3.Time(hour=20, minute=32))
+    
+    await notifier.NotificationLoop()
+
 
 @client.event
 async def on_message(message):
+
     if message.author == client.user:
+
         return
 
-    if message.content.startswith('!test'):
-        looper=Observer.SendMessage('looping',message.channel)
-        a=Observer.TimedEvent()
-        a.Init(3,0.1)
-        a.Add(looper)
-        asyncio.create_task(a.Invokeloop())
+    IUser.AddUnique(message.author)
 
-    if message.content.startswith('hello'):
-        a=str
-        a=message.content
-        print(a)
-        c.execute("INSERT INTO task_inst VALUES (?)",(a,))
-        conn.commit()
-        await message.channel.send('aaa')
-    if message.content.startswith('!list'):
-        for b in c.execute('SELECT * FROM task_inst'):
-            print(b)
+    hnd = GetInstance(message.author, ActiveUsers, Instances)
 
+    command = message.content.split(",")[0].upper()
 
+    if command in OPHandler.Initializers:
+        await hnd.Onmessage(message)
+        pass
 
+    if message.content.startswith("!ACTIVE"):
+        text = str()
 
-client.run(os.getenv('TOKEN'))
+        for i in ActiveUsers:
+            text += i.name + ":" + i.id.__str__() + "\n"
+            pass
+        await message.channel.send(text)
+        pass
+
+client.run(os.getenv("TOKEN"))
+loop.run_until_complete(TimeoutHandler)
+
