@@ -8,12 +8,10 @@ class OPHandler:
     def __init__(self, user: discord.user.User) -> None:
         OPHandler.Initializers=['!T','!t','!task','!TASK']
         self.conn = sqlite3.connect("tasks.db")
-        self.c = self.conn.cursor()
         self.user=discord.User
         self.user = user
-        self.CurOp = Operation.OPBase(self.user, self.c)
+        self.CurOp = Operation.OPBase(self.user)
         self.Interacted=True
-        self.lang='jp'
 
         # self.Say(self.CurOp.Say())
         pass
@@ -27,27 +25,26 @@ class OPHandler:
                 if a in text:
                     text.remove(a)
                 pass
-            res = self.CurOp.Listen(text, self.c)
+            res = self.CurOp.Listen(text)
            
             if type(res) != type(None):
                 if type(res)==Operation.LangPackage:
                     print(type(res.next))
                     self.CurOp=res.next
-                    self.lang=res.lang
                     pass
                 else:
                     self.CurOp = res
                     pass
                 print(type(res))
-                await self.Say(self.CurOp.Say(self.lang))
+                await self.Say(self.CurOp.Say(IUser.GetLang(self.user.name)))
                 pass
             else:
-                await self.Say(self.CurOp.Say(self.lang))
+                await self.Say(self.CurOp.Say(IUser.GetLang(self.user.name)))
         pass
 
     pass
 
-    async def Say(self, txt):
+    async def Say(self, txt:str):
 
         if len(txt)>0:
             print(txt)

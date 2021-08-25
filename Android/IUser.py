@@ -4,20 +4,36 @@ import discord
 
 
 class IUser:
-    def __init__(self):
-        self.id = -1
-        self.name = "undefined"
+
+    def __init__(self,usr:discord.User=None,ID:str=None,Name:str=None) -> None:
         IUser.key='USER_DESC'
+
+        if usr!=None:
+            self.id=usr.id
+            self.name=usr.name
+            pass
+        elif ID!=None and Name!=None:
+            self.id=ID
+            self.name=Name
+            pass
+        else:
+            self.id = -1
+            self.name = "undefined"
+            pass
         pass
-    def __init__(self,usr:discord.User):
-        self.id = usr.id
-        self.name = usr.name
-        IUser.key='USER_DESC'
-        pass
-    def __init__(self, Id, Name):
-        self.id = Id
-        self.name = Name
-        IUser.key='USER_DESC'
+
+    def SetLang(self,lang:str):
+        conn = sqlite3.connect("tasks.db")
+
+        c = conn.cursor()
+
+        q='''
+        UPDATE _USERS 
+        SET language = "{}"
+        WHERE id = {}
+        '''.format(lang,self.id)
+        c.execute(q)
+        conn.commit()
         pass
 
     @staticmethod
@@ -183,3 +199,17 @@ class IUser:
 
         pass
 
+
+def GetLang(username):
+        conn = sqlite3.connect("tasks.db")
+
+        c = conn.cursor()
+
+        q='''
+        SELECT language FROM _USERS
+        WHERE name = '{}'
+        '''.format(username)
+
+        c.execute(q)
+        return c.fetchone()
+        pass

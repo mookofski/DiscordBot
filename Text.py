@@ -9,7 +9,7 @@ def GetText(key,lang)->str:
     q='''
     SELECT * FROM _TEXTS 
     WHERE key = ('{}') AND lang = ('{}')
-    '''.format(key,lang)
+    '''.format(key,lang[0].replace("'",""))
 
     c.execute(q)
 
@@ -19,7 +19,7 @@ def GetText(key,lang)->str:
         q='''
         SELECT * FROM _TEXTS 
         WHERE key = ('{}') AND lang = ('{}')
-        '''.format(key,'jp')
+            '''.format(key,'jp')
 
         c.execute(q)
         buf=c.fetchone()
@@ -35,3 +35,14 @@ def GetText(key,lang)->str:
     pass
 
 
+def add():
+    conn=sqlite3.connect('Texts.db')
+    c=conn.cursor()
+
+    q="""
+    INSERT INTO _TEXTS VALUES ('{}','{}','{}')
+    """.format('LIST','jp','CREATE')
+    c.execute(q)
+
+    conn.commit()
+    pass

@@ -1,4 +1,5 @@
 from asyncio.windows_events import NULL
+from datetime import date
 from Android.IUser import IUser
 from OP_Handler import OPHandler
 import asyncio
@@ -31,10 +32,10 @@ async def Timeout(inst: list[OPHandler], active: list[discord.User]):
     while True:
         await asyncio.sleep(15 * 60)
         if len(inst) > 0:
-            for a in inst:
+            for a in inst:  
 
                 if a.Interacted == False:
-                    active.remove(a.user)
+                    active.remove(a.user)   
                     inst.remove(a)
                     print(":REMOVED")
                     pass  # remove
@@ -57,6 +58,7 @@ ActiveUsers = list[discord.User]()
 loop = asyncio.get_event_loop()
 TimeoutHandler = loop.create_task(Timeout(Instances, ActiveUsers))
 
+ITask.UpdateTask(taskname='a',desc='updated',start=sqlite3.Date(1234,1,1))
 
 
 @client.event
@@ -88,11 +90,15 @@ async def on_message(message):
 
     if message.content.startswith("!ACTIVE"):
         text = str()
-
+        
         for i in ActiveUsers:
             text += i.name + ":" + i.id.__str__() + "\n"
             pass
         await message.channel.send(text)
+        pass
+    if message.content.startswith("!notif"):
+        n=Notifier(client)
+        await n.Notify()
         pass
 
 client.run(os.getenv("TOKEN"))

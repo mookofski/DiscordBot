@@ -1,3 +1,4 @@
+from os import name
 from Android.IUser import IUser
 import sqlite3
 import Text
@@ -70,6 +71,7 @@ class ITask:
             fmt=str(Text.GetText(ITask.key,'en'))
             daystil=self.end-sqlite3.Date.today()
             buf= fmt.format(self.taskname,self.username,self.state,self.end,daystil.days,self.desc)
+            buf+='\n, No Language specified'
             return buf
             pass
         else:
@@ -79,6 +81,57 @@ class ITask:
             return buf
             pass
         pass
+
+    @staticmethod
+    def UpdateTask(taskname,username=None,desc=None,state=None,message=None,start:sqlite3.Date=None,end:sqlite3.Date=None):
+        conn = sqlite3.connect("tasks.db")
+
+        c = conn.cursor()
+        items=list[str]()
+        if username!=None:
+            items.append('''username="{}"'''.format(username))
+            pass
+        if desc!=None:
+            items.append('''description="{}"'''.format(desc))
+            pass
+        if state!=None:
+            items.append('''state="{}"'''.format(state))
+            pass
+        if message!=None:
+            items.append('''message="{}"'''.format(message))
+            pass
+        if start!=None:
+            items.append('''start="{}"'''.format(start))
+            pass
+        if end!=None:
+            items.append('''state="{}"'''.format(end))
+            pass
+        condition=str()
+        if len(items)==1:
+            condition=items[0]
+            pass
+        else:
+            for a in range(0,len(items)):
+                condition+=items[a]
+                if (a<len(items)-1):
+                    condition+=','
+                    pass
+                pass    
+
+        q='''
+        UPDATE _TASK
+        SET {0}
+        WHERE taskname = "{1}"
+        '''.format(items,taskname)
+        q=q.replace('\n',' ')
+        q=q.replace('[',' ')
+        q=q.replace(']',' ')
+        q=q.replace("'",' ')
+
+        c.execute(q)
+        conn.commit()
+        pass
+
 
     @staticmethod
     def FindByName(username):
@@ -97,7 +150,6 @@ class ITask:
         pass
 
     pass
-
 
 
     @staticmethod
@@ -131,7 +183,48 @@ class ITask:
                 res.append(ITask(t))
                 pass
             pass
-        else:
-            res.append(ITask())
+
         return res
+
+def IsCompleted(taskname:str=None,task:ITask=None):
+
+    complete=['DONE','done','完','完了']
+
+    conn = sqlite3.connect("tasks.db")
+
+    c = conn.cursor()
+    
+    if taskname!=None:
+        name=taskname
+        pass
+    else:
+        name=task.taskname
+        pass
+
+    q='''
+    SELECT * FROM _TASK WHERE taskname = '{}'
+    '''.format(name.replace(' ',''))
+
+    c.execute(q)
+    t:ITask=ITask(c.fetchone())
+    
+    return t.state in complete 
+    pass
+
+def FindTaskByTaskName(taskname)->ITask:
+    conn = sqlite3.connect("tasks.db")
+
+    c = conn.cursor()
+        
+    q='''
+    SELECT * FROM _TASK WHERE taskname = '{}'
+    '''.format(taskname.replace(' ',''))
+
+    c.execute(q)
+
+    return ITask(c.fetchone())
+
+    pass
+pass
+
 
